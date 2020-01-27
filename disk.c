@@ -22,7 +22,7 @@ unsigned char init_drive(char __drive)
 	__asm "mov dl,__drive"
 	__asm "int 0x13"
 	
-	__asm "push eflags"
+	__asm "pushf"
 	__asm "pop dx"
 	__asm "mov __eflags,dx"
 	__asm "mov __result,ah"

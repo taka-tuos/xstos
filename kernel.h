@@ -66,6 +66,7 @@ typedef unsigned char u8;
 typedef unsigned int  u16;
 typedef unsigned long u32;
 
+/*
 void emm386_writeb(u32 __addr, u8 __data);
 void emm386_writew(u32 __addr, u16 __data);
 void emm386_writed(u32 __addr, u32 __data);
@@ -76,4 +77,5 @@ void emm386_readdata(void far *__buf, u32 __addr, u16 __size);
 void emm386_readdata_near(void *__buf, u32 __addr, u16 __size);
 void emm386_writedata(void far *__buf, u32 __addr, u16 __size);
 void emm386_writedata_near(void *__buf, u32 __addr, u16 __size);
+*/
 #endif

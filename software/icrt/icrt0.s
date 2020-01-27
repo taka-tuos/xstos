@@ -1,36 +1,30 @@
 .8086
 
-DGROUP group _TEXT,_DATA,_BSS,_STACK,
+DGROUP group _TEXT,_DATA,_BSS,_STACK
 
 _TEXT	segment byte public 'CODE'
 
 public	crtmain
-extrn	kernel_main_ : proc
+extrn	xstos_main_ : proc
 crtmain proc
-	assume	ds:_TEXT
+	assume	ds:DGROUP
 	mov		cx,cs
 	mov		ds,cx
 	
 	assume  es:DGROUP
 	mov		es,cx
 	
-	mov		bx,offset DGROUP:_end
-	add		bx,0Fh
-	and		bl,0F0h
+	mov		bx,0xfffe
 	
 	mov		ss,cx
 	mov		sp,bx
 
-	call	kernel_main_
+	call	xstos_main_
 crtmain endp
 
 _TEXT	ends
 
-STACK_SIZE equ 2000h
-
 _STACK	segment word public 'STACK'
-	db      (STACK_SIZE) dup(?)
-	extrn	_end : byte
 _STACK	ends
 
 _DATA	segment byte public 'DATA'

@@ -1,5 +1,5 @@
-OBJS_KERNEL = kernel.obj disk.obj text.obj ansi.obj memory.obj emm386.obj ff.obj diskio.obj
-LIB = golibc86/golibc86.lib
+OBJS_KERNEL = kernel.o disk.o text.o ansi.o memory.o ff.o diskio.o asmfunc.o
+LIB = software/golibc86/golibc86.lib
 
 empty:=
 space:= $(empty) $(empty)
@@ -16,54 +16,57 @@ COPY     = cp
 DEL      = rm
 DD       = dd
 
-CFLAGS = -bt=dos -3 -s -wx -d0 -fr -ms -zl -i=./golibc86/include
-ASFLAGS = -bt=dos -0r -mt
+CFLAGS = -bt=dos -2 -s -wx -d0 -fr -ms -zl -i=./software//golibc86/include
+ASFLAGS = -bt=dos -2r -mt
 
-# ÉfÉtÉHÉãÉgìÆçÏ
+# „Éá„Éï„Ç©„É´„ÉàÂãï‰Ωú
 
 default :
 	$(MAKE) img
 
-# ÉtÉ@ÉCÉãê∂ê¨ãKë•
+# „Éï„Ç°„Ç§„É´ÁîüÊàêË¶èÂâá
 
-%.obj : %.c Makefile
-	$(WCC) $(CFLAGS) -fo=$*.obj $*.c
+%.o : %.c Makefile
+	$(WCC) $(CFLAGS) -fo=$*.o $*.c
 
-%.obj : %.asm Makefile
-	$(WASM) $(ASFLAGS) -fo=$*.obj $*.asm
+%.o : %.s Makefile
+	$(WASM) $(ASFLAGS) -fo=$*.o $*.s
 
-ipl.bin : ipl.obj Makefile
-	$(WLINK) FILE ipl.obj NAME ipl.raw FORMAT RAW
+ipl.bin : ipl.o Makefile
+	$(WLINK) FILE ipl.o NAME ipl.raw FORMAT RAW
 	$(DD) if=ipl.raw of=ipl.bin skip=62
 
-kernel.sys : icrt0.obj $(OBJS_KERNEL) Makefile
-	$(WLINK) FILE icrt0.obj $(patsubst %.obj, FILE %.obj, $(OBJS_KERNEL)) FORMAT DOS COM NAME kernel.sys OPTION NODEFAULTLIBS, START=crtmain, MAP=kernel.map $(subst $(space), LIBRARY , $(LIB))
+kernel.sys : $(OBJS_KERNEL) Makefile
+	$(WLINK) FILE software/icrt/icrt0.o $(patsubst %.o, FILE %.o, $(OBJS_KERNEL)) FORMAT DOS COM NAME kernel.sys OPTION NODEFAULTLIBS, START=crtmain, MAP=kernel.map LIBRARY $(LIB)
 
-openkernel.img : ipl.bin kernel.sys Makefile
+xstos.img : ipl.bin kernel.sys software/autoexec/autoexec.bin Makefile
 	$(MFORMAT) -f 1440 -C -B ipl.bin -i $$@ xstos.img
 	$(MCOPY) -i xstos.img kernel.sys ::/
-	$(MCOPY) -i xstos.img sample/autoexec.bin ::/
+	$(MCOPY) -i xstos.img software/autoexec/autoexec.bin ::/
 
-# ÉRÉ}ÉìÉh
+# „Ç≥„Éû„É≥„Éâ
 
 img :
-	$(MAKE) -C sample
-	$(MAKE) -C golibc86
-	$(MAKE) openkernel.img
+	$(MAKE) -C software/icrt
+	$(MAKE) -C software/autoexec
+	$(MAKE) -C software/golibc86
+	$(MAKE) xstos.img
 
 clean :
-	$(MAKE) -C sample clean
-	$(MAKE) -C golibc86 clean
+	$(MAKE) -C software/icrt clean
+	$(MAKE) -C software/autoexec clean
+	$(MAKE) -C software/golibc86 clean
 	-$(DEL) ipl.bin
 	-$(DEL) ipl.raw
-	-$(DEL) *.obj
+	-$(DEL) *.o
 	-$(DEL) *.err
 	-$(DEL) *.map
 	
 
-src_only :
-	$(MAKE) -C sample src_only
-	$(MAKE) -C golibc86 src_only
+fclean :
+	$(MAKE) -C software/icrt fclean
+	$(MAKE) -C software/autoexec fclean
+	$(MAKE) -C software/golibc86 fclean
 	$(MAKE) clean
 	-$(DEL) xstos.img
 	-$(DEL) kernel.sys

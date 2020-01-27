@@ -6,7 +6,7 @@ struct CONSOLE cons;
 
 struct MEMMAN far *memman = (struct MEMMAN far *) MEMMAN_ADDR;
 
-void _interrupt api_proc(void);
+void api_proc(void);
 
 char hextbl[] = "0123456789abcdef";
 
@@ -16,7 +16,9 @@ void exec_app(void);
 
 void decode_hex(DWORD data, BYTE col);
 
-void kernel_main()
+extern void asm_api_proc();
+
+void xstos_main()
 {
 	FATFS fs;
 	FIL fp;
@@ -40,27 +42,20 @@ void kernel_main()
 	cons_putstr("Xstos -git build date:"__DATE__"\n",7);
 	cons_putstr("[kernel]:boot successed\n",2);
 	
-	/*__asm "push es"
+	__asm "push es"
+	__asm "push ax"
 	__asm "push bx"
 	__asm "mov ax,0"
 	__asm "mov es,ax"
-	__asm "mov ax,api_proc"
+	__asm "mov ax,asm_api_proc"
 	__asm "mov bx,4*0x40"
 	__asm "mov [es:bx],ax"
 	__asm "mov ax,cs"
 	__asm "mov bx,4*0x40+2"
 	__asm "mov [es:bx],ax"
 	__asm "pop bx"
-	__asm "pop es"*/
-	
-	setvect(0x40,MK_FP(0x0800,api_proc));
-	
-	__asm "push bx"
-	__asm "mov ah,2"
-	__asm "mov al,0x30"
-	__asm "mov bx,0x07"
-	__asm "int 0x40"
-	__asm "pop bx"
+	__asm "pop ax"
+	__asm "pop es"
 	
 	cons_putstr("[kernel]:FatFS initalize...",2);
 	
@@ -75,7 +70,7 @@ void kernel_main()
 	f_puts("書き込み・タイムスタンプテスト",&fp);
 	f_close(&fp);
 	
-	//exec_app();
+	exec_app();
 	
 	for(;;) {
 		__asm "hlt"
@@ -98,19 +93,30 @@ void exec_app(void)
 	int i;
 	BYTE far *appseg = 0x60000000;
 	
+	BYTE r_chksum = 0;
+	BYTE w_chksum = 0;
+	
 	f_open(&fp,"autoexec.bin",FA_OPEN_ALWAYS | FA_READ);
 	while(!f_eof(&fp)) {
 		f_read(&fp, buff, 512, &siz);
-		for(i = 0; i < siz; i++) appseg[ptr + i] = buff[i];
+		for(i = 0; i < siz; i++) {
+			appseg[ptr + i] = buff[i];
+			r_chksum ^= buff[i];
+		}
 		ptr += siz;
 	}
+	
+	for(i = 0; i < ptr; i++) w_chksum ^= appseg[i];
+	
+	sprintf(buff,"R=%02X W=%02X\n",r_chksum,w_chksum);
+	cons_putstr(buff,2);
 	
 	f_close(&fp);
 	
 	__asm "call 0x6000,0x0000"
 }
 
-void _interrupt api_proc(void)
+void api_proc(void)
 {
 	BYTE __ah,__al;
 	WORD __bx,__si;

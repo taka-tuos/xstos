@@ -40,7 +40,7 @@ entry:
 
 ; ディスクを読む
 
-		mov		ax,0x0800
+		mov		ax,0x1000
 		mov		es,ax
 		mov		di,0
 		mov		ch,0			; シリンダ0
@@ -81,7 +81,7 @@ next:
 
 ; 読み終わったのでkernel.sysを実行だ！
 
-		jmp		0x0800,0x0000
+		jmp		0x1000,0x0000
 
 error:
 		mov		si,msg
