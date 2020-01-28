@@ -9,20 +9,20 @@ void memman_init(struct MEMMAN far *man)
 	return;
 }
 
-unsigned int memman_total(struct MEMMAN far *man)
+unsigned long memman_total(struct MEMMAN far *man)
 /* あきサイズの合計を報告 */
 {
-	unsigned int i, t = 0;
+	unsigned long i, t = 0;
 	for (i = 0; i < man->frees; i++) {
 		t += man->free[i].size;
 	}
 	return t;
 }
 
-unsigned int memman_alloc(struct MEMMAN far *man, unsigned int size)
+unsigned long memman_alloc(struct MEMMAN far *man, unsigned long size)
 /* 確保 */
 {
-	unsigned int i, a;
+	unsigned long i, a;
 	
 	size += 15;
 	size &= 0xfff0;
@@ -47,7 +47,7 @@ unsigned int memman_alloc(struct MEMMAN far *man, unsigned int size)
 	return 0; /* あきがない */
 }
 
-int memman_free(struct MEMMAN far *man, unsigned int addr, unsigned int size)
+int memman_free(struct MEMMAN far *man, unsigned long addr, unsigned long size)
 /* 解放 */
 {
 	int i, j;

@@ -15,12 +15,12 @@ int checkline(int *x, int *y)
 	
 	if(*x >= 80) {
 		*x = 0;
-		*y++;
+		*y = *y + 1;
 		ret = 1;
 	}
 	if(*y >= 25) {
 		*y = 24;
-		memcpy((char far *) 0xb8000000, (char far *) 0xb80a0000, 80*25*2);
+		farmemcpy((char far *) 0xb8000000, (char far *) 0xb80a0000, 80*25*2);
 		ret = 1;
 	}
 	

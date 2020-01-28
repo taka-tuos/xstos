@@ -5,8 +5,6 @@
 #define  FP_OFF(__p) ((unsigned)(__p))
 #define MK_FP(__s,__o) (((unsigned short)(__s)):>((void __near *)(__o)))
 
-#define DISKBUF_ADDR		0x18000000
-
 typedef struct {
 	short cyls;
 	short head;
@@ -48,19 +46,22 @@ void setvect(int n, void interrupt far (*func)(void));
 void (far *getvect(int n))(void);
 unsigned long clock(void);
 
-#define MEMMAN_FREES		8192	/* ‚±‚ê‚Å–ñ32KB */
+#define MEMMAN_FREES		2048	/* ‚±‚ê‚Å–ñ32KB */
 #define MEMMAN_ADDR			0x18000000
 struct FREEINFO {	/* ‚ ‚«î•ñ */
-	unsigned int addr, size;
+	unsigned long addr, size;
 };
 struct MEMMAN {		/* ƒƒ‚ƒŠŠÇ— */
 	int frees, maxfrees, lostsize, losts;
 	struct FREEINFO free[MEMMAN_FREES];
 };
 void memman_init(struct MEMMAN far *man);
-unsigned int memman_total(struct MEMMAN far *man);
-unsigned int memman_alloc(struct MEMMAN far *man, unsigned int size);
-int memman_free(struct MEMMAN far *man, unsigned int addr, unsigned int size);
+unsigned long memman_total(struct MEMMAN far *man);
+unsigned long memman_alloc(struct MEMMAN far *man, unsigned long size);
+int memman_free(struct MEMMAN far *man, unsigned long addr, unsigned long size);
+
+#define MEMMAN_FP(__p) MK_FP((__p) >> 4,(__p) & 15)
+#define MEMMAN_CUTUP(__s) (((__s) + 15) & 0xfffffff0)
 
 typedef unsigned char u8;
 typedef unsigned int  u16;

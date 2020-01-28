@@ -3,19 +3,13 @@
 #include <stdlib.h>
 
 struct CONSOLE cons;
-
 struct MEMMAN far *memman = (struct MEMMAN far *) MEMMAN_ADDR;
+FATFS *fatfs;
+FIL app_fil_hnds[16];
 
 void api_proc(void);
-
-char hextbl[] = "0123456789abcdef";
-
-FATFS *fatfs;
-
 void exec_app(void);
-
 void decode_hex(DWORD data, BYTE col);
-
 extern void asm_api_proc();
 
 void xstos_main()
@@ -26,8 +20,8 @@ void xstos_main()
 	
 	// <initmem>
 	memman_init(memman);
-	memman_free(memman, 0x2800, 0xa000 - 0x2800);
-	memman_free(memman, 0xb800, 0x10000 - 0xb800);
+	memman_free(memman, 0x28000, 0x0a0000 - 0x028000);
+	memman_free(memman, 0xb8000, 0x100000 - 0x0b8000);
 	// </initmem>
 	
 	farmemset((char far *)0xb8000000, 0, 80*25*2);
@@ -66,9 +60,11 @@ void xstos_main()
 	if(!res) cons_putstr("done\n",2);
 	else cons_putstr("failed\n",2);
 	
-	f_open(&fp,"FILETEST.TXT",FA_OPEN_ALWAYS | FA_WRITE);
-	f_puts("書き込み・タイムスタンプテスト",&fp);
-	f_close(&fp);
+	//f_open(&fp,"FILETEST.TXT",FA_OPEN_ALWAYS | FA_WRITE);
+	//f_puts("書き込み・タイムスタンプテスト",&fp);
+	//f_close(&fp);
+	
+	memset(app_fil_hnds,0xff,sizeof(app_fil_hnds));
 	
 	exec_app();
 	
@@ -81,7 +77,11 @@ void decode_hex(DWORD data, BYTE col)
 {
 	int i;
 	
-	for(i = 0; i < 8; i++) cons_putchar(hextbl[(data >> ((7 - i) * 4)) & 0xf],col);
+	for(i = 0; i < 8; i++) {
+		int h = (data >> ((7 - i) * 4)) & 0xf;
+		cons_putchar(h >= 10 ? h-10+'A' : h+'0',col);
+	}
+	cons_putchar(0x0a,col);
 }
 
 void exec_app(void)
@@ -121,6 +121,12 @@ void api_proc(void)
 	BYTE __ah,__al;
 	WORD __bx,__si;
 	
+	__asm "push cx"
+	__asm "mov cx,0x800"
+	__asm "mov ds,cx"
+	__asm "mov ss,cx"
+	__asm "pop cx"
+	
 	__asm "mov __ah,ah"
 	__asm "mov __al,al"
 	__asm "mov __bx,bx"
@@ -136,10 +142,38 @@ void api_proc(void)
 			cons_putchar(__al,__bx);
 			break;
 		}
-		case 0x06 : {
+		
+		case 0x03 : {
 			__al = getchar();
 			__asm "mov al,__al"
 			__asm "mov 20[bp],al"
+			break;
+		}
+		
+		case 0x05 : {
+			FIL *fp = &app_fil_hnds[__al];
+			char fn[32];
+			char far *p = MK_FP(0x6000,__si);
+			char *q = fn;
+			for(;*p;p++,q++) *q = *p;
+			
+			f_open(fp,fn,FA_OPEN_ALWAYS | FA_WRITE);
+			break;
+		}
+		
+		case 0x06 : {
+			FIL *fp = &app_fil_hnds[__al];
+			
+			char far *p = MK_FP(0x6000,__si);
+			f_puts("書き込み・タイムスタンプテスト",&fp);
+			//for(;*p;p++) f_putc(*p,fp);
+			break;
+		}
+		
+		case 0x07 : {
+			FIL *fp = &app_fil_hnds[__al];
+			
+			f_close(fp);
 			break;
 		}
 	}
