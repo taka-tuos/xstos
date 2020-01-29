@@ -12,6 +12,8 @@ void exec_app(void);
 void decode_hex(DWORD data, BYTE col);
 extern void asm_api_proc();
 
+struct MEMMAN far *memman_app = (struct MEMMAN far *) MEMMAN_ADDR + sizeof(struct MEMMAN);
+
 void xstos_main()
 {
 	FATFS fs;
@@ -163,9 +165,16 @@ void api_proc(void)
 		
 		case 0x06 : {
 			FIL *fp = &app_fil_hnds[__al];
+			UINT i;
+			//char buff[512];
 			
-			char far *p = MK_FP(0x6000,__si);
-			f_puts("書き込み・タイムスタンプテスト",&fp);
+			//char far *p = MK_FP(0x6000,__si);
+			//char *q = buff;
+			//for(;*p;p++,q++) *q = *p;
+			
+			
+			//f_write(fp, "hoge", 4, &i);
+			
 			//for(;*p;p++) f_putc(*p,fp);
 			break;
 		}

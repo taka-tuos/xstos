@@ -41,7 +41,7 @@ void xstos_main(void)
 {
 	unsigned char i = 7;
 	
-	open("tset.txt");
+	open("test.txt");
 	write("hogehogefugafuga");
 	close();
 	
